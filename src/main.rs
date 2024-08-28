@@ -11,8 +11,8 @@ use std::ptr;
 use x11::xlib::*;
 
 fn main() {
-    let mut last_press_time: Option<Instant> = None; // 前回のキー押下時間を記録
-    let target_key = Key::ControlLeft; // ダブルプレスを検知したいキー
+    let mut last_press_time: Option<Instant> = None;
+    let target_key = Key::ControlLeft; // fixme: config
 
     if let Err(error) = listen(move |event| handle_event(event, &mut last_press_time, target_key)) {
         println!("Error: {:?}", error);
@@ -23,18 +23,16 @@ fn handle_event(event: Event, last_press_time: &mut Option<Instant>, target_key:
     let press_pace = 500; // fixme: config
     if let EventType::KeyPress(key) = event.event_type {
         if key != target_key {
-            return; // 対象キーでない場合は何もしない
+            return;
         }
         let now = Instant::now();
         if let Some(last_time) = last_press_time {
             if now.duration_since(*last_time) < Duration::from_millis(press_pace) {
                 println!("Double press detected!");
-                // launch_app();
-                // switch_to_workspace(2);
                 toggle_window();
             }
         }
-        *last_press_time = Some(now); // 現在の時間を記録
+        *last_press_time = Some(now);
     }
 }
 
@@ -42,14 +40,6 @@ fn launch_app() {
     Command::new("/usr/local/bin/alacritty") // fixme: config
         .spawn()
         .expect("Failed to start the application");
-}
-
-fn switch_to_workspace(workspace_number: u32) {
-    let _ = Command::new("wmctrl")
-        .arg("-s")
-        .arg(workspace_number.to_string())
-        .output()
-        .expect("Failed to switch workspace");
 }
 
 fn find_window_id(display: *mut Display, target_title: &str) -> Option<Window> {
@@ -239,15 +229,14 @@ fn toggle_window_visibility(display: *mut Display, window: Window) {
     }
 
     if attributes.map_state == IsViewable {
-        // ウィンドウが表示されている場合は最小化（非表示）する
+        // If window is visible, hidden it
         unsafe {
-            // XIconifyWindow(display, window, XDefaultScreen(display));
             XUnmapWindow(display, window);
             XFlush(display);
         }
-        println!("ウィンドウを最小化しました。");
+        println!("Window is hidden.");
     } else {
-        // ウィンドウが非表示の場合は最前面に持ってくる
+        // If window is hidden, bring it to front
         unsafe {
             XMapWindow(display, window);
             // XRaiseWindow(display, window);
@@ -261,17 +250,15 @@ fn toggle_window_visibility(display: *mut Display, window: Window) {
 fn toggle_window() {
     let display = unsafe { XOpenDisplay(ptr::null()) };
     if display.is_null() {
-        eprintln!("X11 ディスプレイを開けませんでした。");
+        eprintln!("X11 cannot open display.");
         return;
     }
 
-    let target_title = "Terminal"; // タイトルで探すウィンドウ名
+    let target_title = "Terminal"; // fixme: config
     if let Some(window_id) = find_window_id(display, target_title) {
         if is_window_on_current_workspace(display, window_id) {
-            // ウィンドウが現在のワークスペースにある場合
             toggle_window_visibility(display, window_id);
         } else {
-            // ウィンドウが他のワークスペースにある場合
             move_window_to_current_workspace(display, window_id);
             unsafe {
                 XRaiseWindow(display, window_id);
@@ -279,7 +266,8 @@ fn toggle_window() {
             }
         }
     } else {
-        println!("ウィンドウが見つかりませんでした。");
+        println!("Window not found.");
+        launch_app();
     }
 
     unsafe { XCloseDisplay(display) };
