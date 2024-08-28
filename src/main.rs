@@ -11,42 +11,43 @@ use std::ptr;
 use x11::xlib::*;
 
 struct Config {
-    press_pace: u64,
+    double_press_interval: u64,
     app_path: String,
-    target_title: String,
-    target_key: Key,
+    app_name: String,
+    detect_key: Key,
 }
 
 impl Config {
     fn default() -> Self {
         Config {
-            press_pace: 500,
+            double_press_interval: 500,
             app_path: String::from("/usr/local/bin/alacritty"),
-            target_title: String::from("Alacritty"),
-            target_key: Key::ControlLeft,
+            app_name: String::from("Alacritty"),
+            detect_key: Key::ControlLeft,
         }
     }
 }
 
 fn main() {
     let mut last_press_time: Option<Instant> = None;
-    let target_key = Key::ControlLeft; // fixme: config
 
-    if let Err(error) = listen(move |event| handle_event(event, &mut last_press_time, target_key)) {
+    if let Err(error) = listen(move |event| handle_event(event, &mut last_press_time)) {
         println!("Error: {:?}", error);
     }
 }
 
-fn handle_event(event: Event, last_press_time: &mut Option<Instant>, target_key: Key) {
-    let press_pace = 500; // fixme: config
+fn handle_event(event: Event, last_press_time: &mut Option<Instant>) {
+    let config = Config::default();
     if let EventType::KeyPress(key) = event.event_type {
-        if key != target_key {
+        if key != config.detect_key {
             return;
         }
         let now = Instant::now();
         if let Some(last_time) = last_press_time {
-            if now.duration_since(*last_time) < Duration::from_millis(press_pace) {
-                println!("Double press detected!");
+            if now.duration_since(*last_time) < Duration::from_millis(config.double_press_interval)
+            {
+                // println!("Double press detected!");
+                println!("{}", "-".repeat(10));
                 toggle_window();
             }
         }
@@ -55,7 +56,8 @@ fn handle_event(event: Event, last_press_time: &mut Option<Instant>, target_key:
 }
 
 fn launch_app() {
-    Command::new("/usr/local/bin/alacritty") // fixme: config
+    let config = Config::default();
+    Command::new(config.app_path)
         .spawn()
         .expect("Failed to start the application");
 }
@@ -261,7 +263,7 @@ fn toggle_window_visibility(display: *mut Display, window: Window) {
             // XSetInputFocus(display, window, RevertToParent, CurrentTime);
             XFlush(display);
         }
-        println!("ウィンドウを表示しました。");
+        println!("Window is visible.");
     }
 }
 
@@ -272,16 +274,20 @@ fn toggle_window() {
         return;
     }
 
-    let target_title = "Terminal"; // fixme: config
-    if let Some(window_id) = find_window_id(display, target_title) {
+    let config = Config::default();
+    if let Some(window_id) = find_window_id(display, config.app_name.as_str()) {
         if is_window_on_current_workspace(display, window_id) {
             toggle_window_visibility(display, window_id);
         } else {
+            println!("Window is move to workspace.");
             move_window_to_current_workspace(display, window_id);
             unsafe {
-                XRaiseWindow(display, window_id);
+                XMapWindow(display, window_id);
+                // XRaiseWindow(display, window_id);
                 // XSetInputFocus(display, window_id, RevertToParent, CurrentTime);
+                XFlush(display);
             }
+            println!("Window is visible after move.");
         }
     } else {
         println!("Window not found.");
