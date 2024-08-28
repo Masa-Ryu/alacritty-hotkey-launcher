@@ -259,8 +259,6 @@ fn toggle_window_visibility(display: *mut Display, window: Window) {
         // If window is hidden, bring it to front
         unsafe {
             XMapWindow(display, window);
-            // XRaiseWindow(display, window);
-            // XSetInputFocus(display, window, RevertToParent, CurrentTime);
             XFlush(display);
         }
         println!("Window is visible.");
@@ -280,11 +278,13 @@ fn toggle_window() {
             toggle_window_visibility(display, window_id);
         } else {
             println!("Window is move to workspace.");
+            unsafe {
+                XUnmapWindow(display, window_id);
+                XFlush(display);
+             }
             move_window_to_current_workspace(display, window_id);
             unsafe {
                 XMapWindow(display, window_id);
-                // XRaiseWindow(display, window_id);
-                // XSetInputFocus(display, window_id, RevertToParent, CurrentTime);
                 XFlush(display);
             }
             println!("Window is visible after move.");
@@ -292,6 +292,7 @@ fn toggle_window() {
     } else {
         println!("Window not found.");
         launch_app();
+        println!("Window is launched.");
     }
 
     unsafe { XCloseDisplay(display) };
