@@ -10,6 +10,24 @@ use std::ffi::CString;
 use std::ptr;
 use x11::xlib::*;
 
+struct Config {
+    press_pace: u64,
+    app_path: String,
+    target_title: String,
+    target_key: Key,
+}
+
+impl Config {
+    fn default() -> Self {
+        Config {
+            press_pace: 500,
+            app_path: String::from("/usr/local/bin/alacritty"),
+            target_title: String::from("Alacritty"),
+            target_key: Key::ControlLeft,
+        }
+    }
+}
+
 fn main() {
     let mut last_press_time: Option<Instant> = None;
     let target_key = Key::ControlLeft; // fixme: config
