@@ -13,6 +13,7 @@ Alacritty title on window setting: "Alacritty"
 
 # Requirements
 [Alacritty](https://github.com/alacritty/alacritty)
+
 [Alacritty home page](https://alacritty.org/index.html)
 
 ```
