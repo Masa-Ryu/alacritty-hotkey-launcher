@@ -20,7 +20,7 @@ struct Config {
 impl Config {
     fn default() -> Self {
         Config {
-            double_press_interval: 500,
+            double_press_interval: 300,
             app_path: String::from("/usr/local/bin/alacritty"),
             app_name: String::from("Alacritty"),
             detect_key: Key::ControlLeft,
