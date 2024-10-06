@@ -88,7 +88,9 @@ fn find_window_id(display: *mut Display, target_title: &str) -> Option<Window> {
             unsafe {
                 XFetchName(display, window, &mut name);
                 if !name.is_null() {
-                    let title = CString::from_raw(name).into_string().unwrap_or_default();
+                    let c_str = std::ffi::CStr::from_ptr(name);
+                    let title = c_str.to_string_lossy().into_owned();
+                    XFree(name as *mut _);
                     if title.contains(target_title) {
                         result = Some(window);
                         break;
@@ -106,17 +108,19 @@ fn find_window_id(display: *mut Display, target_title: &str) -> Option<Window> {
 }
 
 fn is_window_on_current_workspace(display: *mut Display, window: Window) -> bool {
+    let cstring_net_wm_desktop = CString::new("_NET_WM_DESKTOP").unwrap();
     let net_wm_desktop = unsafe {
         XInternAtom(
             display,
-            CString::new("_NET_WM_DESKTOP").unwrap().as_ptr(),
+            cstring_net_wm_desktop.as_ptr(),
             1,
         )
     };
+    let cstring_net_current_desktop = CString::new("_NET_CURRENT_DESKTOP").unwrap();
     let net_current_desktop = unsafe {
         XInternAtom(
             display,
-            CString::new("_NET_CURRENT_DESKTOP").unwrap().as_ptr(),
+            cstring_net_current_desktop.as_ptr(),
             1,
         )
     };
@@ -180,17 +184,19 @@ fn is_window_on_current_workspace(display: *mut Display, window: Window) -> bool
 }
 
 fn move_window_to_current_workspace(display: *mut Display, window: Window) {
+    let cstring_net_wm_desktop = CString::new("_NET_WM_DESKTOP").unwrap();
     let net_wm_desktop = unsafe {
         XInternAtom(
             display,
-            CString::new("_NET_WM_DESKTOP").unwrap().as_ptr(),
+            cstring_net_wm_desktop.as_ptr(),
             1,
         )
     };
+    let cstring_net_current_desktop = CString::new("_NET_CURRENT_DESKTOP").unwrap();
     let net_current_desktop = unsafe {
         XInternAtom(
             display,
-            CString::new("_NET_CURRENT_DESKTOP").unwrap().as_ptr(),
+            cstring_net_current_desktop.as_ptr(),
             1,
         )
     };
@@ -249,14 +255,14 @@ fn toggle_window_visibility(display: *mut Display, window: Window) {
     }
 
     if attributes.map_state == IsViewable {
-        // If window is visible, hidden it
+        // ウィンドウが表示されている場合、非表示にする
         unsafe {
             XUnmapWindow(display, window);
             XFlush(display);
         }
         println!("Window is hidden.");
     } else {
-        // If window is hidden, bring it to front
+        // ウィンドウが非表示の場合、前面に表示する
         unsafe {
             XMapWindow(display, window);
             XFlush(display);
@@ -277,11 +283,11 @@ fn toggle_window() {
         if is_window_on_current_workspace(display, window_id) {
             toggle_window_visibility(display, window_id);
         } else {
-            println!("Window is move to workspace.");
+            println!("Window is moved to current workspace.");
             unsafe {
                 XUnmapWindow(display, window_id);
                 XFlush(display);
-             }
+            }
             move_window_to_current_workspace(display, window_id);
             unsafe {
                 XMapWindow(display, window_id);
