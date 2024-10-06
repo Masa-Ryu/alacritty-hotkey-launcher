@@ -1,0 +1,28 @@
+name: Release Build
+
+on:
+  workflow_dispatch
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Install rust
+        run: |
+          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+          source $HOME/.cargo/env
+
+      - name: Build release package
+        run: |
+          cargo build --release
+
+      - name: Upload release package
+        uses: actions/upload-artifact@v2
+        with:
+          name: release-binaries
+          path: target/release/
+
