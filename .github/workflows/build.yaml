@@ -12,11 +12,16 @@ env:
 
 jobs:
   test:
+
     runs-on: ubuntu-latest
 
     steps:
     - name: Checkout
       uses: actions/checkout@v4
+
+    # 必要なシステムライブラリをインストール
+    - name: Install system dependencies
+      run: sudo apt-get update && sudo apt-get install -y libxi-dev pkg-config
 
     - name: Cache cargo registry
       uses: actions/cache@v4
