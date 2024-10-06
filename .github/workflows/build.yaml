@@ -20,9 +20,4 @@ jobs:
         run: |
           cargo build --release
 
-      - name: Upload release package
-        uses: actions/upload-artifact@v2
-        with:
-          name: release-binaries
-          path: target/release/
 
