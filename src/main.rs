@@ -20,7 +20,7 @@ struct Config {
 impl Config {
     fn default() -> Self {
         Config {
-            double_press_interval: 300,
+            double_press_interval: 500,
             app_path: String::from("/usr/local/bin/alacritty"),
             app_name: String::from("Alacritty"),
             detect_key: Key::ControlLeft,
@@ -29,6 +29,7 @@ impl Config {
 }
 
 fn main() {
+    println!("Launch app");
     let mut last_press_time: Option<Instant> = None;
 
     if let Err(error) = listen(move |event| handle_event(event, &mut last_press_time)) {
@@ -46,7 +47,7 @@ fn handle_event(event: Event, last_press_time: &mut Option<Instant>) {
         if let Some(last_time) = last_press_time {
             if now.duration_since(*last_time) < Duration::from_millis(config.double_press_interval)
             {
-                // println!("Double press detected!");
+                println!("Double press detected!");
                 println!("{}", "-".repeat(10));
                 toggle_window();
             }
@@ -109,21 +110,10 @@ fn find_window_id(display: *mut Display, target_title: &str) -> Option<Window> {
 
 fn is_window_on_current_workspace(display: *mut Display, window: Window) -> bool {
     let cstring_net_wm_desktop = CString::new("_NET_WM_DESKTOP").unwrap();
-    let net_wm_desktop = unsafe {
-        XInternAtom(
-            display,
-            cstring_net_wm_desktop.as_ptr(),
-            1,
-        )
-    };
+    let net_wm_desktop = unsafe { XInternAtom(display, cstring_net_wm_desktop.as_ptr(), 1) };
     let cstring_net_current_desktop = CString::new("_NET_CURRENT_DESKTOP").unwrap();
-    let net_current_desktop = unsafe {
-        XInternAtom(
-            display,
-            cstring_net_current_desktop.as_ptr(),
-            1,
-        )
-    };
+    let net_current_desktop =
+        unsafe { XInternAtom(display, cstring_net_current_desktop.as_ptr(), 1) };
 
     let mut current_desktop: c_ulong = 0;
     let mut window_desktop: c_ulong = 0;
@@ -185,21 +175,10 @@ fn is_window_on_current_workspace(display: *mut Display, window: Window) -> bool
 
 fn move_window_to_current_workspace(display: *mut Display, window: Window) {
     let cstring_net_wm_desktop = CString::new("_NET_WM_DESKTOP").unwrap();
-    let net_wm_desktop = unsafe {
-        XInternAtom(
-            display,
-            cstring_net_wm_desktop.as_ptr(),
-            1,
-        )
-    };
+    let net_wm_desktop = unsafe { XInternAtom(display, cstring_net_wm_desktop.as_ptr(), 1) };
     let cstring_net_current_desktop = CString::new("_NET_CURRENT_DESKTOP").unwrap();
-    let net_current_desktop = unsafe {
-        XInternAtom(
-            display,
-            cstring_net_current_desktop.as_ptr(),
-            1,
-        )
-    };
+    let net_current_desktop =
+        unsafe { XInternAtom(display, cstring_net_current_desktop.as_ptr(), 1) };
 
     let mut current_desktop: c_ulong = 0;
 
