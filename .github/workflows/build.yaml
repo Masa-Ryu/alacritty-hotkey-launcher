@@ -13,11 +13,10 @@ jobs:
 
       - name: Install rust
         run: |
+          sudo apt update && sudo apt upgrade -y
           curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
           source $HOME/.cargo/env
 
       - name: Build release package
         run: |
           cargo build --release
-
-
