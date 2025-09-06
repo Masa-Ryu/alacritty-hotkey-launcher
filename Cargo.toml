@@ -5,6 +5,6 @@ edition = "2021"
 
 [dependencies]
 rdev = "0.5.0"
-x11 = "2.18.0"
+x11 = "2.21.0"
 serde = { version = "1.0", features = ["derive"] }
 toml = "0.8"

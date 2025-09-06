@@ -1,5 +1,6 @@
 mod common_backend;
 mod config;
+mod x11_ewmh;
 mod x11_backend;
 mod wayland_backend;
 
