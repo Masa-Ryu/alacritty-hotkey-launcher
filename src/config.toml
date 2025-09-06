@@ -1,0 +1,5 @@
+[settings]
+interval = 300
+app_path = "/usr/local/bin/alacritty"
+app_name = "class=Alacritty"
+detected_key = "ctrl_left"
