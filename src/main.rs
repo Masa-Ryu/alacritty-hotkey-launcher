@@ -34,7 +34,7 @@ fn main() {
         .unwrap_or_else(|| AppConfig {
             double_press_interval: Duration::from_millis(300),
             app_path: "/usr/local/bin/alacritty".to_string(),
-            app_name: "Alacritty".to_string(),
+            app_name: "class=Alacritty".to_string(),
             detect_key: Key::ControlLeft,
         });
 

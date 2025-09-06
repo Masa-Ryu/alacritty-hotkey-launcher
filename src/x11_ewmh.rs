@@ -29,10 +29,28 @@ pub fn build_net_active_window_message(window: u64, net_active_window_atom: u64)
 }
 
 pub fn matches_app(target: &str, title: Option<&str>, wm_class: Option<&str>) -> bool {
-    let t = target.to_ascii_lowercase();
-    if let Some(s) = title { if s.to_ascii_lowercase().contains(&t) { return true; } }
-    if let Some(s) = wm_class { if s.to_ascii_lowercase().contains(&t) { return true; } }
-    false
+    let t = target.trim();
+    if t.is_empty() { return false; }
+
+    // Optional explicit prefixes
+    let (mode, pat) = if let Some(rest) = t.strip_prefix("class=") { ("class_eq", rest) }
+        else if let Some(rest) = t.strip_prefix("title=") { ("title_eq", rest) }
+        else if let Some(rest) = t.strip_prefix("title_contains=") { ("title_contains", rest) }
+        else { ("default", t) };
+
+    let p = pat.to_ascii_lowercase();
+    match mode {
+        "class_eq" => wm_class.map(|s| s.eq_ignore_ascii_case(pat)).unwrap_or(false),
+        "title_eq" => title.map(|s| s.eq_ignore_ascii_case(pat)).unwrap_or(false),
+        "title_contains" => title.map(|s| s.to_ascii_lowercase().contains(&p)).unwrap_or(false),
+        _ => {
+            // Default: if WM_CLASS is present, require exact match (case-insensitive).
+            // Fallback to title contains only when class is unavailable.
+            if let Some(cls) = wm_class { if cls.eq_ignore_ascii_case(pat) { return true; } }
+            if wm_class.is_none() { if let Some(ti) = title { return ti.to_ascii_lowercase().contains(&p); } }
+            false
+        }
+    }
 }
 
 pub fn have_atoms(supported: &[u64], required: &[u64]) -> bool {
@@ -81,8 +99,20 @@ mod tests {
     #[test]
     fn app_match_by_title_or_class() {
         assert!(matches_app("Alacritty", Some("Terminal — Alacritty"), None));
-        assert!(matches_app("alacritty", None, Some("org.alacritty")));
+        assert!(matches_app("alacritty", None, Some("Alacritty")));
         assert!(!matches_app("Alacritty", Some("Other"), Some("OtherApp")));
+    }
+
+    #[test]
+    fn app_match_explicit_modes() {
+        // class equals
+        assert!(matches_app("class=Alacritty", None, Some("alacritty")));
+        assert!(!matches_app("class=Alacritty", None, Some("org.alacritty")));
+        // title equals
+        assert!(matches_app("title=MyTerm", Some("myterm"), None));
+        assert!(!matches_app("title=MyTerm", Some("Other MyTerm!"), None));
+        // title contains
+        assert!(matches_app("title_contains=MyTerm", Some("Other MyTerm!"), None));
     }
 
     #[test]

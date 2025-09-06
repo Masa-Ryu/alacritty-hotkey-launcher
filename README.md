@@ -44,15 +44,20 @@ X11/Wayland の自動選択:
 [settings]
 interval = 300                 # ダブルタップ判定の間隔(ms)
 app_path = "/usr/local/bin/alacritty"  # 起動コマンド
-app_name = "Alacritty"         # ウィンドウタイトルの一部（X11）
+app_name = "class=Alacritty"   # 既定: WM_CLASSに厳密一致（推奨）
 detected_key = "ctrl_left"     # 検出キー（ctrl_left/ctrl_right など）
 ```
 
 互換: 旧表記 `[settigs]` や `detected_keys = ["ctrl_left", ...]` にも対応します（自動補正/先頭キー採用）。
 
-サポートする主なキー表記（大文字小文字無視）:
+キー表記（大文字小文字無視）:
 - `ctrl_left`, `control_left`, `ctrl`, `control`
 - `ctrl_right`, `control_right`
+
+アプリ識別の書式（X11）:
+- `class=Alacritty`: WM_CLASS に厳密一致（推奨、誤検出を防止）
+- `title=MyTerm`: タイトルに厳密一致
+- `title_contains=Alacritty`: タイトル部分一致（必要な場合のみ）
 
 ## 仕様（安定化のための振る舞い）
 - ダブルタップ検出は「押下→離す→押下」のみを有効とし、オートリピートを無視
