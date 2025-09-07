@@ -3,7 +3,7 @@
 version = 4
 
 [[package]]
-name = "Alacritty-Hotkey-Launcher"
+name = "alacritty-hotkey-launcher"
 version = "0.1.0"
 dependencies = [
  "rdev",

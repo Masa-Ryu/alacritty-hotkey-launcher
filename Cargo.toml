@@ -1,5 +1,5 @@
 [package]
-name = "Alacritty-Hotkey-Launcher"
+name = "alacritty-hotkey-launcher"
 version = "0.1.0"
 edition = "2021"
 

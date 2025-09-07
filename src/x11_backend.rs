@@ -312,7 +312,7 @@ impl X11Backend {
         unsafe {
             if Self::ewmh_supported(display) {
                 let net_wm_desktop = XInternAtom(display, CString::new("_NET_WM_DESKTOP").unwrap().as_ptr(), 1);
-                let spec = build_net_wm_desktop_message(window as u64, current_desktop as u64, net_wm_desktop as u64);
+                let spec = build_net_wm_desktop_message(window, current_desktop as u64, net_wm_desktop as u64);
                 Self::send_client_message(display, root, window, spec);
             } else {
                 let net_wm_desktop = XInternAtom(display, CString::new("_NET_WM_DESKTOP").unwrap().as_ptr(), 1);
@@ -336,7 +336,7 @@ impl X11Backend {
             let root = XDefaultRootWindow(display);
             if Self::ewmh_supported(display) {
                 let net_active = XInternAtom(display, CString::new("_NET_ACTIVE_WINDOW").unwrap().as_ptr(), 1);
-                let spec = build_net_active_window_message(window as u64, net_active as u64);
+                let spec = build_net_active_window_message(window, net_active as u64);
                 Self::send_client_message(display, root, window, spec);
             } else {
                 XMapWindow(display, window);
@@ -415,7 +415,7 @@ impl X11Backend {
             XInternAtom(display, CString::new("_NET_WM_DESKTOP").unwrap().as_ptr(), 1) as u64,
             XInternAtom(display, CString::new("_NET_ACTIVE_WINDOW").unwrap().as_ptr(), 1) as u64,
         ];
-        let supported: Vec<u64> = slice.iter().map(|&x| x as u64).collect();
+        let supported: Vec<u64> = slice.to_vec();
         let ok = crate::x11_ewmh::have_atoms(&supported, &required);
         XFree(prop as *mut _);
         ok
@@ -424,7 +424,7 @@ impl X11Backend {
 
 impl WindowBackend for X11Backend {
     fn find_window(&mut self, app_name: &str) -> Option<u64> {
-        Self::with_display(|d| Self::find_window_internal(d, app_name).map(|w| w as u64)).flatten()
+        Self::with_display(|d| Self::find_window_internal(d, app_name)).flatten()
     }
 
     fn is_on_current_workspace(&mut self, window: u64) -> bool {
