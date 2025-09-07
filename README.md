@@ -25,8 +25,8 @@ Alacritty itself:
 
 ## Build & Run
 ```
-git clone https://github.com/Masa-Ryu/Alacritty-Hotkey-Launcher.git
-cd Alacritty-Hotkey-Launcher
+git clone https://github.com/Masa-Ryu/alacritty-hotkey-launcher.git
+cd alacritty-hotkey-launcher
 ./installer.sh
 ```
 

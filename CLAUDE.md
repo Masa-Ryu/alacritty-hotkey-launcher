@@ -13,7 +13,7 @@ cargo build
 cargo build --release
 
 # Run the application directly
-./target/release/Alacritty-Hotkey-Launcher
+./target/release/alacritty-hotkey-launcher
 
 # Run with custom config
 ALACRITTY_HOTKEY_LAUNCHER_CONFIG=/path/to/config.toml cargo run
@@ -91,7 +91,7 @@ Key settings in `config.toml`:
 
 The application implements this logic:
 - **Same workspace + visible**: Hide window
-- **Same workspace + hidden**: Show window  
+- **Same workspace + hidden**: Show window
 - **Different workspace**: Move to current workspace and show
 - **Window not found**: Launch new instance
 

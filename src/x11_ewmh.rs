@@ -7,7 +7,11 @@ pub struct ClientMessageSpec {
     pub data: [i64; 5],
 }
 
-pub fn build_net_wm_desktop_message(window: u64, target_desktop: u64, net_wm_desktop_atom: u64) -> ClientMessageSpec {
+pub fn build_net_wm_desktop_message(
+    window: u64,
+    target_desktop: u64,
+    net_wm_desktop_atom: u64,
+) -> ClientMessageSpec {
     // data.l[0] = the new desktop number
     // data.l[1] = source indication (1 = application)
     ClientMessageSpec {
@@ -17,7 +21,10 @@ pub fn build_net_wm_desktop_message(window: u64, target_desktop: u64, net_wm_des
     }
 }
 
-pub fn build_net_active_window_message(window: u64, net_active_window_atom: u64) -> ClientMessageSpec {
+pub fn build_net_active_window_message(
+    window: u64,
+    net_active_window_atom: u64,
+) -> ClientMessageSpec {
     // data.l[0] = source indication (1 = application)
     // data.l[1] = timestamp (CurrentTime = 0)
     // data.l[2] = currently active window and source (we use 0)
@@ -30,24 +37,43 @@ pub fn build_net_active_window_message(window: u64, net_active_window_atom: u64)
 
 pub fn matches_app(target: &str, title: Option<&str>, wm_class: Option<&str>) -> bool {
     let t = target.trim();
-    if t.is_empty() { return false; }
+    if t.is_empty() {
+        return false;
+    }
 
     // Optional explicit prefixes
-    let (mode, pat) = if let Some(rest) = t.strip_prefix("class=") { ("class_eq", rest) }
-        else if let Some(rest) = t.strip_prefix("title=") { ("title_eq", rest) }
-        else if let Some(rest) = t.strip_prefix("title_contains=") { ("title_contains", rest) }
-        else { ("default", t) };
+    let (mode, pat) = if let Some(rest) = t.strip_prefix("class=") {
+        ("class_eq", rest)
+    } else if let Some(rest) = t.strip_prefix("title=") {
+        ("title_eq", rest)
+    } else if let Some(rest) = t.strip_prefix("title_contains=") {
+        ("title_contains", rest)
+    } else {
+        ("default", t)
+    };
 
     let p = pat.to_ascii_lowercase();
     match mode {
-        "class_eq" => wm_class.map(|s| s.eq_ignore_ascii_case(pat)).unwrap_or(false),
+        "class_eq" => wm_class
+            .map(|s| s.eq_ignore_ascii_case(pat))
+            .unwrap_or(false),
         "title_eq" => title.map(|s| s.eq_ignore_ascii_case(pat)).unwrap_or(false),
-        "title_contains" => title.map(|s| s.to_ascii_lowercase().contains(&p)).unwrap_or(false),
+        "title_contains" => title
+            .map(|s| s.to_ascii_lowercase().contains(&p))
+            .unwrap_or(false),
         _ => {
             // Default: if WM_CLASS is present, require exact match (case-insensitive).
             // Fallback to title contains only when class is unavailable.
-            if let Some(cls) = wm_class { if cls.eq_ignore_ascii_case(pat) { return true; } }
-            if wm_class.is_none() { if let Some(ti) = title { return ti.to_ascii_lowercase().contains(&p); } }
+            if let Some(cls) = wm_class {
+                if cls.eq_ignore_ascii_case(pat) {
+                    return true;
+                }
+            }
+            if wm_class.is_none() {
+                if let Some(ti) = title {
+                    return ti.to_ascii_lowercase().contains(&p);
+                }
+            }
             false
         }
     }
@@ -67,10 +93,18 @@ pub struct Candidate {
 // Selection policy: prefer on-current-workspace and visible; then on-current-workspace hidden;
 // then any visible; finally any.
 pub fn select_preferred_window(candidates: &[Candidate]) -> Option<u64> {
-    if candidates.is_empty() { return None; }
-    if let Some(c) = candidates.iter().find(|c| c.on_current_ws && c.visible) { return Some(c.window); }
-    if let Some(c) = candidates.iter().find(|c| c.on_current_ws && !c.visible) { return Some(c.window); }
-    if let Some(c) = candidates.iter().find(|c| !c.on_current_ws && c.visible) { return Some(c.window); }
+    if candidates.is_empty() {
+        return None;
+    }
+    if let Some(c) = candidates.iter().find(|c| c.on_current_ws && c.visible) {
+        return Some(c.window);
+    }
+    if let Some(c) = candidates.iter().find(|c| c.on_current_ws && !c.visible) {
+        return Some(c.window);
+    }
+    if let Some(c) = candidates.iter().find(|c| !c.on_current_ws && c.visible) {
+        return Some(c.window);
+    }
     Some(candidates[0].window)
 }
 
@@ -112,7 +146,11 @@ mod tests {
         assert!(matches_app("title=MyTerm", Some("myterm"), None));
         assert!(!matches_app("title=MyTerm", Some("Other MyTerm!"), None));
         // title contains
-        assert!(matches_app("title_contains=MyTerm", Some("Other MyTerm!"), None));
+        assert!(matches_app(
+            "title_contains=MyTerm",
+            Some("Other MyTerm!"),
+            None
+        ));
     }
 
     #[test]
@@ -125,16 +163,36 @@ mod tests {
     #[test]
     fn selection_prefers_current_visible_then_current_hidden() {
         let cands = vec![
-            Candidate { window: 10, on_current_ws: false, visible: true },
-            Candidate { window: 11, on_current_ws: true,  visible: false },
-            Candidate { window: 12, on_current_ws: true,  visible: true },
+            Candidate {
+                window: 10,
+                on_current_ws: false,
+                visible: true,
+            },
+            Candidate {
+                window: 11,
+                on_current_ws: true,
+                visible: false,
+            },
+            Candidate {
+                window: 12,
+                on_current_ws: true,
+                visible: true,
+            },
         ];
         // Should pick 12 (current & visible)
         assert_eq!(select_preferred_window(&cands), Some(12));
 
         let cands2 = vec![
-            Candidate { window: 20, on_current_ws: false, visible: true },
-            Candidate { window: 21, on_current_ws: true,  visible: false },
+            Candidate {
+                window: 20,
+                on_current_ws: false,
+                visible: true,
+            },
+            Candidate {
+                window: 21,
+                on_current_ws: true,
+                visible: false,
+            },
         ];
         // No current-visible: pick 21 (current & hidden)
         assert_eq!(select_preferred_window(&cands2), Some(21));
@@ -143,14 +201,30 @@ mod tests {
     #[test]
     fn selection_falls_back_to_visible_then_any() {
         let cands = vec![
-            Candidate { window: 30, on_current_ws: false, visible: true },
-            Candidate { window: 31, on_current_ws: false, visible: false },
+            Candidate {
+                window: 30,
+                on_current_ws: false,
+                visible: true,
+            },
+            Candidate {
+                window: 31,
+                on_current_ws: false,
+                visible: false,
+            },
         ];
         assert_eq!(select_preferred_window(&cands), Some(30));
 
         let cands2 = vec![
-            Candidate { window: 40, on_current_ws: false, visible: false },
-            Candidate { window: 41, on_current_ws: false, visible: false },
+            Candidate {
+                window: 40,
+                on_current_ws: false,
+                visible: false,
+            },
+            Candidate {
+                window: 41,
+                on_current_ws: false,
+                visible: false,
+            },
         ];
         assert_eq!(select_preferred_window(&cands2), Some(40));
     }

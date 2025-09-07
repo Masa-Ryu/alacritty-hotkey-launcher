@@ -1,8 +1,11 @@
 use crate::common_backend::WindowBackend;
-use crate::x11_ewmh::{build_net_active_window_message, build_net_wm_desktop_message, matches_app, Candidate, select_preferred_window};
+use crate::x11_ewmh::{
+    build_net_active_window_message, build_net_wm_desktop_message, matches_app,
+    select_preferred_window, Candidate,
+};
 use std::ffi::{CStr, CString};
-use std::ptr;
 use std::process::Command;
+use std::ptr;
 
 extern crate x11;
 use core::ffi::{c_int, c_long, c_uchar, c_ulong};
@@ -30,8 +33,16 @@ impl X11Backend {
         unsafe {
             let root = XDefaultRootWindow(display);
             // Try stacking list first for better z-order preference
-            let net_client_list_stacking = XInternAtom(display, CString::new("_NET_CLIENT_LIST_STACKING").unwrap().as_ptr(), 1);
-            let net_client_list = XInternAtom(display, CString::new("_NET_CLIENT_LIST").unwrap().as_ptr(), 1);
+            let net_client_list_stacking = XInternAtom(
+                display,
+                CString::new("_NET_CLIENT_LIST_STACKING").unwrap().as_ptr(),
+                1,
+            );
+            let net_client_list = XInternAtom(
+                display,
+                CString::new("_NET_CLIENT_LIST").unwrap().as_ptr(),
+                1,
+            );
 
             let mut list_prop: *mut c_uchar = ptr::null_mut();
             let mut nitems: c_ulong = 0;
@@ -55,9 +66,13 @@ impl X11Backend {
                     &mut list_prop,
                 );
                 if !list_prop.is_null() && nitems > 0 {
-                    got = true; break;
+                    got = true;
+                    break;
                 }
-                if !list_prop.is_null() { XFree(list_prop as *mut _); list_prop = ptr::null_mut(); }
+                if !list_prop.is_null() {
+                    XFree(list_prop as *mut _);
+                    list_prop = ptr::null_mut();
+                }
             }
 
             if !got {
@@ -74,7 +89,11 @@ impl X11Backend {
                 if matches_app(target, title.as_deref(), class.as_deref()) {
                     let on_ws = Self::is_on_current_workspace_internal(display, w);
                     let vis = Self::is_visible_internal(display, w);
-                    candidates.push(Candidate { window: w as u64, on_current_ws: on_ws, visible: vis });
+                    candidates.push(Candidate {
+                        window: w,
+                        on_current_ws: on_ws,
+                        visible: vis,
+                    });
                 }
             }
             XFree(list_prop as *mut _);
@@ -109,18 +128,25 @@ impl X11Backend {
                 if matches_app(target, title.as_deref(), class.as_deref()) {
                     let on_ws = Self::is_on_current_workspace_internal(display, window);
                     let vis = Self::is_visible_internal(display, window);
-                    candidates.push(Candidate { window: window as u64, on_current_ws: on_ws, visible: vis });
+                    candidates.push(Candidate {
+                        window,
+                        on_current_ws: on_ws,
+                        visible: vis,
+                    });
                 }
             }
         }
-        if !windows.is_null() { unsafe { XFree(windows as *mut _) }; }
+        if !windows.is_null() {
+            unsafe { XFree(windows as *mut _) };
+        }
         select_preferred_window(&candidates).map(|id| id as Window)
     }
 
     fn get_window_title(display: *mut Display, window: Window) -> Option<String> {
         unsafe {
             // Try _NET_WM_NAME (UTF8)
-            let net_wm_name = XInternAtom(display, CString::new("_NET_WM_NAME").unwrap().as_ptr(), 1);
+            let net_wm_name =
+                XInternAtom(display, CString::new("_NET_WM_NAME").unwrap().as_ptr(), 1);
             let utf8 = XInternAtom(display, CString::new("UTF8_STRING").unwrap().as_ptr(), 1);
             let mut actual_type: Atom = 0;
             let mut actual_format: c_int = 0;
@@ -147,7 +173,9 @@ impl X11Backend {
                 XFree(prop as *mut _);
                 return Some(title);
             }
-            if !prop.is_null() { XFree(prop as *mut _); }
+            if !prop.is_null() {
+                XFree(prop as *mut _);
+            }
 
             // Fallback: WM_NAME via XFetchName
             let mut name: *mut i8 = ptr::null_mut();
@@ -167,10 +195,20 @@ impl X11Backend {
             let mut class_hint: XClassHint = std::mem::zeroed();
             if XGetClassHint(display, window, &mut class_hint) != 0 {
                 let res_class = if !class_hint.res_class.is_null() {
-                    Some(CStr::from_ptr(class_hint.res_class).to_string_lossy().into_owned())
-                } else { None };
-                if !class_hint.res_name.is_null() { XFree(class_hint.res_name as *mut _); }
-                if !class_hint.res_class.is_null() { XFree(class_hint.res_class as *mut _); }
+                    Some(
+                        CStr::from_ptr(class_hint.res_class)
+                            .to_string_lossy()
+                            .into_owned(),
+                    )
+                } else {
+                    None
+                };
+                if !class_hint.res_name.is_null() {
+                    XFree(class_hint.res_name as *mut _);
+                }
+                if !class_hint.res_class.is_null() {
+                    XFree(class_hint.res_class as *mut _);
+                }
                 return res_class;
             }
         }
@@ -181,7 +219,8 @@ impl X11Backend {
         let cstring_net_wm_desktop = CString::new("_NET_WM_DESKTOP").unwrap();
         let net_wm_desktop = unsafe { XInternAtom(display, cstring_net_wm_desktop.as_ptr(), 1) };
         let cstring_net_current_desktop = CString::new("_NET_CURRENT_DESKTOP").unwrap();
-        let net_current_desktop = unsafe { XInternAtom(display, cstring_net_current_desktop.as_ptr(), 1) };
+        let net_current_desktop =
+            unsafe { XInternAtom(display, cstring_net_current_desktop.as_ptr(), 1) };
 
         let mut current_desktop: c_ulong = 0;
         let mut window_desktop: c_ulong = 0;
@@ -267,7 +306,8 @@ impl X11Backend {
             if !prop.is_null() && nitems >= 1 {
                 let state = *(prop as *const c_ulong) as c_long;
                 XFree(prop as *mut _);
-                if state == 3 { // IconicState
+                if state == 3 {
+                    // IconicState
                     return false;
                 }
             } else if !prop.is_null() {
@@ -281,7 +321,13 @@ impl X11Backend {
 
     fn move_to_current_workspace_internal(display: *mut Display, window: Window) {
         // Read current desktop
-        let net_current_desktop = unsafe { XInternAtom(display, CString::new("_NET_CURRENT_DESKTOP").unwrap().as_ptr(), 1) };
+        let net_current_desktop = unsafe {
+            XInternAtom(
+                display,
+                CString::new("_NET_CURRENT_DESKTOP").unwrap().as_ptr(),
+                1,
+            )
+        };
         let root = unsafe { XDefaultRootWindow(display) };
         let mut actual_type: Atom = 0;
         let mut actual_format: c_int = 0;
@@ -306,16 +352,31 @@ impl X11Backend {
         }
         let mut current_desktop: c_ulong = 0;
         if !prop.is_null() {
-            unsafe { current_desktop = *(prop as *mut c_ulong); XFree(prop as *mut _); }
+            unsafe {
+                current_desktop = *(prop as *mut c_ulong);
+                XFree(prop as *mut _);
+            }
         }
         // EWMH: send ClientMessage _NET_WM_DESKTOP to move, fallback to direct property
         unsafe {
             if Self::ewmh_supported(display) {
-                let net_wm_desktop = XInternAtom(display, CString::new("_NET_WM_DESKTOP").unwrap().as_ptr(), 1);
-                let spec = build_net_wm_desktop_message(window as u64, current_desktop as u64, net_wm_desktop as u64);
+                let net_wm_desktop = XInternAtom(
+                    display,
+                    CString::new("_NET_WM_DESKTOP").unwrap().as_ptr(),
+                    1,
+                );
+                let spec = build_net_wm_desktop_message(
+                    window,
+                    current_desktop as u64,
+                    net_wm_desktop as u64,
+                );
                 Self::send_client_message(display, root, window, spec);
             } else {
-                let net_wm_desktop = XInternAtom(display, CString::new("_NET_WM_DESKTOP").unwrap().as_ptr(), 1);
+                let net_wm_desktop = XInternAtom(
+                    display,
+                    CString::new("_NET_WM_DESKTOP").unwrap().as_ptr(),
+                    1,
+                );
                 XChangeProperty(
                     display,
                     window,
@@ -335,8 +396,12 @@ impl X11Backend {
         unsafe {
             let root = XDefaultRootWindow(display);
             if Self::ewmh_supported(display) {
-                let net_active = XInternAtom(display, CString::new("_NET_ACTIVE_WINDOW").unwrap().as_ptr(), 1);
-                let spec = build_net_active_window_message(window as u64, net_active as u64);
+                let net_active = XInternAtom(
+                    display,
+                    CString::new("_NET_ACTIVE_WINDOW").unwrap().as_ptr(),
+                    1,
+                );
+                let spec = build_net_active_window_message(window, net_active as u64);
                 Self::send_client_message(display, root, window, spec);
             } else {
                 XMapWindow(display, window);
@@ -389,7 +454,8 @@ impl X11Backend {
 
     unsafe fn ewmh_supported(display: *mut Display) -> bool {
         let root = XDefaultRootWindow(display);
-        let net_supported = XInternAtom(display, CString::new("_NET_SUPPORTED").unwrap().as_ptr(), 1);
+        let net_supported =
+            XInternAtom(display, CString::new("_NET_SUPPORTED").unwrap().as_ptr(), 1);
         let mut actual_type: Atom = 0;
         let mut actual_format: c_int = 0;
         let mut nitems: c_ulong = 0;
@@ -409,13 +475,23 @@ impl X11Backend {
             &mut bytes_after,
             &mut prop,
         );
-        if prop.is_null() || nitems == 0 { return false; }
+        if prop.is_null() || nitems == 0 {
+            return false;
+        }
         let slice = std::slice::from_raw_parts(prop as *const c_ulong, nitems as usize);
         let required = [
-            XInternAtom(display, CString::new("_NET_WM_DESKTOP").unwrap().as_ptr(), 1) as u64,
-            XInternAtom(display, CString::new("_NET_ACTIVE_WINDOW").unwrap().as_ptr(), 1) as u64,
+            XInternAtom(
+                display,
+                CString::new("_NET_WM_DESKTOP").unwrap().as_ptr(),
+                1,
+            ) as u64,
+            XInternAtom(
+                display,
+                CString::new("_NET_ACTIVE_WINDOW").unwrap().as_ptr(),
+                1,
+            ) as u64,
         ];
-        let supported: Vec<u64> = slice.iter().map(|&x| x as u64).collect();
+        let supported: Vec<u64> = slice.to_vec();
         let ok = crate::x11_ewmh::have_atoms(&supported, &required);
         XFree(prop as *mut _);
         ok
@@ -424,11 +500,12 @@ impl X11Backend {
 
 impl WindowBackend for X11Backend {
     fn find_window(&mut self, app_name: &str) -> Option<u64> {
-        Self::with_display(|d| Self::find_window_internal(d, app_name).map(|w| w as u64)).flatten()
+        Self::with_display(|d| Self::find_window_internal(d, app_name)).flatten()
     }
 
     fn is_on_current_workspace(&mut self, window: u64) -> bool {
-        Self::with_display(|d| Self::is_on_current_workspace_internal(d, window as Window)).unwrap_or(false)
+        Self::with_display(|d| Self::is_on_current_workspace_internal(d, window as Window))
+            .unwrap_or(false)
     }
 
     fn is_visible(&mut self, window: u64) -> bool {
@@ -436,7 +513,8 @@ impl WindowBackend for X11Backend {
     }
 
     fn move_to_current_workspace(&mut self, window: u64) {
-        let _ = Self::with_display(|d| Self::move_to_current_workspace_internal(d, window as Window));
+        let _ =
+            Self::with_display(|d| Self::move_to_current_workspace_internal(d, window as Window));
     }
 
     fn show(&mut self, window: u64) {

@@ -1,8 +1,8 @@
 mod common_backend;
 mod config;
-mod x11_ewmh;
-mod x11_backend;
 mod wayland_backend;
+mod x11_backend;
+mod x11_ewmh;
 
 use common_backend::{toggle_or_launch, AppConfig, DoublePressDetector};
 use rdev::{listen, Event, EventType, Key};
@@ -30,17 +30,18 @@ fn main() {
     let config_path = env::var("ALACRITTY_HOTKEY_LAUNCHER_CONFIG")
         .ok()
         .unwrap_or_else(|| "src/config.toml".to_string());
-    let config = config::load_from_file(&config_path)
-        .unwrap_or_else(|| AppConfig {
-            double_press_interval: Duration::from_millis(300),
-            app_path: "/usr/local/bin/alacritty".to_string(),
-            app_name: "class=Alacritty".to_string(),
-            detect_key: Key::ControlLeft,
-        });
+    let config = config::load_from_file(&config_path).unwrap_or_else(|| AppConfig {
+        double_press_interval: Duration::from_millis(300),
+        app_path: "/usr/local/bin/alacritty".to_string(),
+        app_name: "class=Alacritty".to_string(),
+        detect_key: Key::ControlLeft,
+    });
 
     let mut detector = DoublePressDetector::new(config.double_press_interval, config.detect_key);
 
-    if let Err(error) = listen(move |event| handle_event(event, &mut detector, &mut *backend, &config)) {
+    if let Err(error) =
+        listen(move |event| handle_event(event, &mut detector, &mut *backend, &config))
+    {
         eprintln!("Error: {:?}", error);
     }
 }
