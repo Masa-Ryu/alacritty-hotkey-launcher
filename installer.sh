@@ -1,6 +1,10 @@
 #!/bin/bash
 
 cargo build --release
+if [ $? -ne 0 ]; then
+    echo "Error: cargo build failed. Aborting installation."
+    exit 1
+fi
 
 mkdir -p ~/.local/bin
 cp target/release/alacritty-hotkey-launcher ~/.local/bin/alacritty-hotkey-launcher
