@@ -1,4 +1,4 @@
-use crate::common_backend::AppConfig;
+use crate::common_backend::{AppConfig, WaylandHideMethod};
 use rdev::Key;
 use serde::Deserialize;
 use std::fs;
@@ -24,6 +24,8 @@ struct Settings {
     detected_key: Option<String>,
     #[serde(default)]
     detected_keys: Option<Vec<String>>,
+    #[serde(default)]
+    wayland_hide_method: Option<String>,
 }
 
 fn default_interval() -> u64 { 300 }
@@ -38,6 +40,7 @@ impl Default for Settings {
             app_name: default_app_name(),
             detected_key: None,
             detected_keys: None,
+            wayland_hide_method: None,
         }
     }
 }
@@ -63,11 +66,16 @@ pub fn load_from_str(s: &str) -> AppConfig {
 
     let detect_key = parse_key(&key_str).unwrap_or(Key::ControlLeft);
 
+    // Wayland hide method
+    let hide_method_str = settings.wayland_hide_method.unwrap_or_else(|| "auto".to_string());
+    let wayland_hide_method = parse_hide_method(&hide_method_str);
+
     AppConfig {
         double_press_interval: Duration::from_millis(interval),
         app_path,
         app_name,
         detect_key,
+        wayland_hide_method,
     }
 }
 
@@ -88,6 +96,15 @@ fn parse_key(s: &str) -> Option<Key> {
     }
 }
 
+fn parse_hide_method(s: &str) -> WaylandHideMethod {
+    match s.to_ascii_lowercase().as_str() {
+        "auto" => WaylandHideMethod::Auto,
+        "scratchpad" => WaylandHideMethod::Scratchpad,
+        "none" => WaylandHideMethod::None,
+        _ => WaylandHideMethod::Auto,
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -100,12 +117,14 @@ mod tests {
             app_path = "/bin/echo"
             app_name = "Echo"
             detected_key = "ctrl_left"
+            wayland_hide_method = "scratchpad"
         "#;
         let cfg = load_from_str(s);
         assert_eq!(cfg.double_press_interval, Duration::from_millis(450));
         assert_eq!(cfg.app_path, "/bin/echo");
         assert_eq!(cfg.app_name, "Echo");
         assert!(matches!(cfg.detect_key, Key::ControlLeft));
+        assert!(matches!(cfg.wayland_hide_method, WaylandHideMethod::Scratchpad));
     }
 
     #[test]
@@ -136,5 +155,7 @@ mod tests {
         assert_eq!(cfg.double_press_interval, Duration::from_millis(300));
         // invalid key -> default ControlLeft
         assert!(matches!(cfg.detect_key, Key::ControlLeft));
+        // hide method default auto
+        assert!(matches!(cfg.wayland_hide_method, WaylandHideMethod::Auto));
     }
 }

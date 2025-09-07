@@ -2,11 +2,19 @@ use rdev::Key;
 use std::time::{Duration, Instant};
 
 // Public config shared by backends and orchestrator
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum WaylandHideMethod {
+    Auto,
+    Scratchpad,
+    None,
+}
+
 pub struct AppConfig {
     pub double_press_interval: Duration,
     pub app_path: String,
     pub app_name: String,
     pub detect_key: Key,
+    pub wayland_hide_method: WaylandHideMethod,
 }
 
 // Unified backend interface. Uses a portable u64 as WindowId.
@@ -135,6 +143,7 @@ mod tests {
             app_path: "test".into(),
             app_name: "Alacritty".into(),
             detect_key: Key::ControlLeft,
+            wayland_hide_method: WaylandHideMethod::Auto,
         };
         toggle_or_launch(&mut be, &cfg);
         assert!(be.hidden);
@@ -150,6 +159,7 @@ mod tests {
             app_path: "test".into(),
             app_name: "Alacritty".into(),
             detect_key: Key::ControlLeft,
+            wayland_hide_method: WaylandHideMethod::Auto,
         };
         toggle_or_launch(&mut be, &cfg);
         assert!(be.shown);
@@ -165,6 +175,7 @@ mod tests {
             app_path: "test".into(),
             app_name: "Alacritty".into(),
             detect_key: Key::ControlLeft,
+            wayland_hide_method: WaylandHideMethod::Auto,
         };
         toggle_or_launch(&mut be, &cfg);
         assert!(be.moved);
@@ -181,6 +192,7 @@ mod tests {
             app_path: "test".into(),
             app_name: "Alacritty".into(),
             detect_key: Key::ControlLeft,
+            wayland_hide_method: WaylandHideMethod::Auto,
         };
         toggle_or_launch(&mut be, &cfg);
         assert!(be.launched);
@@ -204,4 +216,3 @@ mod tests {
         assert!(!dp.on_key_press(target, t0 + Duration::from_millis(700)));
     }
 }
-
