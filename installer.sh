@@ -6,10 +6,18 @@ mkdir -p ~/.local/bin
 cp target/release/alacritty-hotkey-launcher ~/.local/bin/alacritty-hotkey-launcher
 
 mkdir -p ~/.config/alacritty-hotkey-launcher
-cat > ~/.config/alacritty-hotkey-launcher/config.toml <<'EOF'
+
+# Detect Alacritty path
+ALACRITTY_PATH="$(which alacritty 2>/dev/null)"
+if [ -z "$ALACRITTY_PATH" ]; then
+    echo "Warning: Could not detect Alacritty binary with 'which alacritty'. Using default path '/usr/bin/alacritty'."
+    ALACRITTY_PATH="/usr/bin/alacritty"
+fi
+
+cat > ~/.config/alacritty-hotkey-launcher/config.toml <<EOF
 [settings]
 interval = 300
-app_path = "/usr/bin/alacritty"
+app_path = "$ALACRITTY_PATH"
 app_name = "class=Alacritty"
 detected_key = "ctrl_left"
 EOF
