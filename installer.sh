@@ -26,15 +26,21 @@ app_name = "class=Alacritty"
 detected_key = "ctrl_left"
 EOF
 
+# Detect current DISPLAY
+CURRENT_DISPLAY="${DISPLAY:-:0}"
+
 mkdir -p ~/.config/systemd/user
-cat > ~/.config/systemd/user/alacritty-hotkey-launcher.service <<'EOF'
+cat > ~/.config/systemd/user/alacritty-hotkey-launcher.service <<EOF
 [Unit]
 Description=Alacritty Hotkey Launcher
+After=graphical-session.target
 
 [Service]
 ExecStart=%h/.local/bin/alacritty-hotkey-launcher
 Environment=ALACRITTY_HOTKEY_LAUNCHER_CONFIG=%h/.config/alacritty-hotkey-launcher/config.toml
+Environment=DISPLAY=$CURRENT_DISPLAY
 Restart=on-failure
+RestartSec=5
 
 [Install]
 WantedBy=default.target
@@ -42,3 +48,14 @@ EOF
 
 systemctl --user daemon-reload
 systemctl --user enable --now alacritty-hotkey-launcher
+
+echo "Installation completed!"
+echo ""
+echo "Service status:"
+systemctl --user status alacritty-hotkey-launcher --no-pager -l
+echo ""
+echo "If the service fails, check logs with:"
+echo "  journalctl --user -u alacritty-hotkey-launcher -f"
+echo ""
+echo "Manual restart:"
+echo "  systemctl --user restart alacritty-hotkey-launcher"
