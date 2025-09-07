@@ -2,11 +2,19 @@ use rdev::Key;
 use std::time::{Duration, Instant};
 
 // Public config shared by backends and orchestrator
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum WaylandHideMethod {
+    Auto,
+    Scratchpad,
+    None,
+}
+
 pub struct AppConfig {
     pub double_press_interval: Duration,
     pub app_path: String,
     pub app_name: String,
     pub detect_key: Key,
+    pub wayland_hide_method: WaylandHideMethod,
 }
 
 // Unified backend interface. Uses a portable u64 as WindowId.
@@ -117,14 +125,34 @@ mod tests {
 
     impl WindowBackend for MockBackend {
         fn find_window(&mut self, _app_name: &str) -> Option<u64> {
-            if self.has_window { Some(1) } else { None }
+            if self.has_window {
+                Some(1)
+            } else {
+                None
+            }
         }
-        fn is_on_current_workspace(&mut self, _window: u64) -> bool { self.on_ws }
-        fn is_visible(&mut self, _window: u64) -> bool { self.visible }
-        fn move_to_current_workspace(&mut self, _window: u64) { self.moved = true; self.on_ws = true; }
-        fn show(&mut self, _window: u64) { self.shown = true; self.visible = true; }
-        fn hide(&mut self, _window: u64) { self.hidden = true; self.visible = false; }
-        fn launch_app(&mut self, _app_path: &str) { self.launched = true; self.has_window = true; }
+        fn is_on_current_workspace(&mut self, _window: u64) -> bool {
+            self.on_ws
+        }
+        fn is_visible(&mut self, _window: u64) -> bool {
+            self.visible
+        }
+        fn move_to_current_workspace(&mut self, _window: u64) {
+            self.moved = true;
+            self.on_ws = true;
+        }
+        fn show(&mut self, _window: u64) {
+            self.shown = true;
+            self.visible = true;
+        }
+        fn hide(&mut self, _window: u64) {
+            self.hidden = true;
+            self.visible = false;
+        }
+        fn launch_app(&mut self, _app_path: &str) {
+            self.launched = true;
+            self.has_window = true;
+        }
     }
 
     #[test]
@@ -135,6 +163,7 @@ mod tests {
             app_path: "test".into(),
             app_name: "Alacritty".into(),
             detect_key: Key::ControlLeft,
+            wayland_hide_method: WaylandHideMethod::Auto,
         };
         toggle_or_launch(&mut be, &cfg);
         assert!(be.hidden);
@@ -150,6 +179,7 @@ mod tests {
             app_path: "test".into(),
             app_name: "Alacritty".into(),
             detect_key: Key::ControlLeft,
+            wayland_hide_method: WaylandHideMethod::Auto,
         };
         toggle_or_launch(&mut be, &cfg);
         assert!(be.shown);
@@ -165,6 +195,7 @@ mod tests {
             app_path: "test".into(),
             app_name: "Alacritty".into(),
             detect_key: Key::ControlLeft,
+            wayland_hide_method: WaylandHideMethod::Auto,
         };
         toggle_or_launch(&mut be, &cfg);
         assert!(be.moved);
@@ -181,6 +212,7 @@ mod tests {
             app_path: "test".into(),
             app_name: "Alacritty".into(),
             detect_key: Key::ControlLeft,
+            wayland_hide_method: WaylandHideMethod::Auto,
         };
         toggle_or_launch(&mut be, &cfg);
         assert!(be.launched);
@@ -204,4 +236,3 @@ mod tests {
         assert!(!dp.on_key_press(target, t0 + Duration::from_millis(700)));
     }
 }
-

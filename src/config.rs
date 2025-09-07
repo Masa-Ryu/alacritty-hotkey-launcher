@@ -1,4 +1,4 @@
-use crate::common_backend::AppConfig;
+use crate::common_backend::{AppConfig, WaylandHideMethod};
 use rdev::Key;
 use serde::Deserialize;
 use std::fs;
@@ -13,22 +13,30 @@ struct FileConfig {
 
 #[derive(Debug, Deserialize)]
 struct Settings {
-    #[serde(default = "default_interval")] 
+    #[serde(default = "default_interval")]
     interval: u64,
-    #[serde(default = "default_app_path")] 
+    #[serde(default = "default_app_path")]
     app_path: String,
-    #[serde(default = "default_app_name")] 
+    #[serde(default = "default_app_name")]
     app_name: String,
     // Accept either a single key or the first of an array named detected_keys
     #[serde(default)]
     detected_key: Option<String>,
     #[serde(default)]
     detected_keys: Option<Vec<String>>,
+    #[serde(default)]
+    wayland_hide_method: Option<String>,
 }
 
-fn default_interval() -> u64 { 300 }
-fn default_app_path() -> String { "/usr/local/bin/alacritty".to_string() }
-fn default_app_name() -> String { "Alacritty".to_string() }
+fn default_interval() -> u64 {
+    300
+}
+fn default_app_path() -> String {
+    "/usr/local/bin/alacritty".to_string()
+}
+fn default_app_name() -> String {
+    "Alacritty".to_string()
+}
 
 impl Default for Settings {
     fn default() -> Self {
@@ -38,6 +46,7 @@ impl Default for Settings {
             app_name: default_app_name(),
             detected_key: None,
             detected_keys: None,
+            wayland_hide_method: None,
         }
     }
 }
@@ -63,11 +72,18 @@ pub fn load_from_str(s: &str) -> AppConfig {
 
     let detect_key = parse_key(&key_str).unwrap_or(Key::ControlLeft);
 
+    // Wayland hide method
+    let hide_method_str = settings
+        .wayland_hide_method
+        .unwrap_or_else(|| "auto".to_string());
+    let wayland_hide_method = parse_hide_method(&hide_method_str);
+
     AppConfig {
         double_press_interval: Duration::from_millis(interval),
         app_path,
         app_name,
         detect_key,
+        wayland_hide_method,
     }
 }
 
@@ -81,10 +97,22 @@ pub fn load_from_file(path: impl AsRef<Path>) -> Option<AppConfig> {
 fn parse_key(s: &str) -> Option<Key> {
     let k = s.to_ascii_lowercase();
     match k.as_str() {
-        "ctrl" | "control" | "ctrl_left" | "control_left" | "left_ctrl" | "left_control" | "controlleft" => Some(Key::ControlLeft),
-        "ctrl_right" | "control_right" | "right_ctrl" | "right_control" | "controlright" => Some(Key::ControlRight),
+        "ctrl" | "control" | "ctrl_left" | "control_left" | "left_ctrl" | "left_control"
+        | "controlleft" => Some(Key::ControlLeft),
+        "ctrl_right" | "control_right" | "right_ctrl" | "right_control" | "controlright" => {
+            Some(Key::ControlRight)
+        }
         // Extend as needed
         _ => None,
+    }
+}
+
+fn parse_hide_method(s: &str) -> WaylandHideMethod {
+    match s.to_ascii_lowercase().as_str() {
+        "auto" => WaylandHideMethod::Auto,
+        "scratchpad" => WaylandHideMethod::Scratchpad,
+        "none" => WaylandHideMethod::None,
+        _ => WaylandHideMethod::Auto,
     }
 }
 
@@ -100,12 +128,17 @@ mod tests {
             app_path = "/bin/echo"
             app_name = "Echo"
             detected_key = "ctrl_left"
+            wayland_hide_method = "scratchpad"
         "#;
         let cfg = load_from_str(s);
         assert_eq!(cfg.double_press_interval, Duration::from_millis(450));
         assert_eq!(cfg.app_path, "/bin/echo");
         assert_eq!(cfg.app_name, "Echo");
         assert!(matches!(cfg.detect_key, Key::ControlLeft));
+        assert!(matches!(
+            cfg.wayland_hide_method,
+            WaylandHideMethod::Scratchpad
+        ));
     }
 
     #[test]
@@ -136,5 +169,7 @@ mod tests {
         assert_eq!(cfg.double_press_interval, Duration::from_millis(300));
         // invalid key -> default ControlLeft
         assert!(matches!(cfg.detect_key, Key::ControlLeft));
+        // hide method default auto
+        assert!(matches!(cfg.wayland_hide_method, WaylandHideMethod::Auto));
     }
 }
