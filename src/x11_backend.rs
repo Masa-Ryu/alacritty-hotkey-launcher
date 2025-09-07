@@ -74,7 +74,7 @@ impl X11Backend {
                 if matches_app(target, title.as_deref(), class.as_deref()) {
                     let on_ws = Self::is_on_current_workspace_internal(display, w);
                     let vis = Self::is_visible_internal(display, w);
-                    candidates.push(Candidate { window: w as u64, on_current_ws: on_ws, visible: vis });
+                    candidates.push(Candidate { window: w, on_current_ws: on_ws, visible: vis });
                 }
             }
             XFree(list_prop as *mut _);
@@ -109,7 +109,7 @@ impl X11Backend {
                 if matches_app(target, title.as_deref(), class.as_deref()) {
                     let on_ws = Self::is_on_current_workspace_internal(display, window);
                     let vis = Self::is_visible_internal(display, window);
-                    candidates.push(Candidate { window: window as u64, on_current_ws: on_ws, visible: vis });
+                    candidates.push(Candidate { window, on_current_ws: on_ws, visible: vis });
                 }
             }
         }
