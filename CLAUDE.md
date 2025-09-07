@@ -38,6 +38,9 @@ cargo fmt --all --check
 
 # Auto-format code
 cargo fmt --all
+
+# Run pre-push validation (same as GitHub Actions CI)
+./pre-push-check.sh
 ```
 
 ### System Dependencies
