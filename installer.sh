@@ -3,7 +3,7 @@
 cargo build --release
 
 mkdir -p ~/.local/bin
-cp target/release/Alacritty-Hotkey-Launcher ~/.local/bin/alacritty-hotkey-launcher
+cp target/release/alacritty-hotkey-launcher ~/.local/bin/alacritty-hotkey-launcher
 
 mkdir -p ~/.config/alacritty-hotkey-launcher
 cat > ~/.config/alacritty-hotkey-launcher/config.toml <<'EOF'
