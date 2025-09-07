@@ -30,7 +30,7 @@ mkdir -p ~/.config/systemd/user
 cat > ~/.config/systemd/user/alacritty-hotkey-launcher.service <<'EOF'
 [Unit]
 Description=Alacritty Hotkey Launcher
-After=graphical.target
+After=graphical-session.target
 
 [Service]
 Type=simple
@@ -42,7 +42,7 @@ KillMode=mixed
 TimeoutStopSec=5
 
 [Install]
-WantedBy=default.target
+WantedBy=graphical-session.target
 EOF
 
 # Create a wrapper script that sets up environment properly
