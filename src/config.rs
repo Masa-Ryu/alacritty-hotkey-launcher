@@ -13,11 +13,11 @@ struct FileConfig {
 
 #[derive(Debug, Deserialize)]
 struct Settings {
-    #[serde(default = "default_interval")] 
+    #[serde(default = "default_interval")]
     interval: u64,
-    #[serde(default = "default_app_path")] 
+    #[serde(default = "default_app_path")]
     app_path: String,
-    #[serde(default = "default_app_name")] 
+    #[serde(default = "default_app_name")]
     app_name: String,
     // Accept either a single key or the first of an array named detected_keys
     #[serde(default)]
@@ -26,9 +26,15 @@ struct Settings {
     detected_keys: Option<Vec<String>>,
 }
 
-fn default_interval() -> u64 { 300 }
-fn default_app_path() -> String { "/usr/local/bin/alacritty".to_string() }
-fn default_app_name() -> String { "Alacritty".to_string() }
+fn default_interval() -> u64 {
+    300
+}
+fn default_app_path() -> String {
+    "/usr/local/bin/alacritty".to_string()
+}
+fn default_app_name() -> String {
+    "Alacritty".to_string()
+}
 
 impl Default for Settings {
     fn default() -> Self {
@@ -81,8 +87,11 @@ pub fn load_from_file(path: impl AsRef<Path>) -> Option<AppConfig> {
 fn parse_key(s: &str) -> Option<Key> {
     let k = s.to_ascii_lowercase();
     match k.as_str() {
-        "ctrl" | "control" | "ctrl_left" | "control_left" | "left_ctrl" | "left_control" | "controlleft" => Some(Key::ControlLeft),
-        "ctrl_right" | "control_right" | "right_ctrl" | "right_control" | "controlright" => Some(Key::ControlRight),
+        "ctrl" | "control" | "ctrl_left" | "control_left" | "left_ctrl" | "left_control"
+        | "controlleft" => Some(Key::ControlLeft),
+        "ctrl_right" | "control_right" | "right_ctrl" | "right_control" | "controlright" => {
+            Some(Key::ControlRight)
+        }
         // Extend as needed
         _ => None,
     }

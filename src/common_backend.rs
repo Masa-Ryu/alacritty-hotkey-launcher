@@ -117,14 +117,34 @@ mod tests {
 
     impl WindowBackend for MockBackend {
         fn find_window(&mut self, _app_name: &str) -> Option<u64> {
-            if self.has_window { Some(1) } else { None }
+            if self.has_window {
+                Some(1)
+            } else {
+                None
+            }
         }
-        fn is_on_current_workspace(&mut self, _window: u64) -> bool { self.on_ws }
-        fn is_visible(&mut self, _window: u64) -> bool { self.visible }
-        fn move_to_current_workspace(&mut self, _window: u64) { self.moved = true; self.on_ws = true; }
-        fn show(&mut self, _window: u64) { self.shown = true; self.visible = true; }
-        fn hide(&mut self, _window: u64) { self.hidden = true; self.visible = false; }
-        fn launch_app(&mut self, _app_path: &str) { self.launched = true; self.has_window = true; }
+        fn is_on_current_workspace(&mut self, _window: u64) -> bool {
+            self.on_ws
+        }
+        fn is_visible(&mut self, _window: u64) -> bool {
+            self.visible
+        }
+        fn move_to_current_workspace(&mut self, _window: u64) {
+            self.moved = true;
+            self.on_ws = true;
+        }
+        fn show(&mut self, _window: u64) {
+            self.shown = true;
+            self.visible = true;
+        }
+        fn hide(&mut self, _window: u64) {
+            self.hidden = true;
+            self.visible = false;
+        }
+        fn launch_app(&mut self, _app_path: &str) {
+            self.launched = true;
+            self.has_window = true;
+        }
     }
 
     #[test]
@@ -204,4 +224,3 @@ mod tests {
         assert!(!dp.on_key_press(target, t0 + Duration::from_millis(700)));
     }
 }
-
